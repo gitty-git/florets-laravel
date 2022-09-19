@@ -7,14 +7,9 @@ use App\Models\Product;
 
 class ProductsController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function index()
     {
-        return Product::all();
+        return Product::where('published', '1')->orderBy('created_at', 'DESC')->get();
     }
 
     public function search($search) {

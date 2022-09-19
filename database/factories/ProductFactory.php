@@ -19,7 +19,9 @@ class ProductFactory extends Factory
     {
         return [
             'name' => fake()->name(),
-            'img' => rand(1, 3),
+            'main_image' => rand(1, 3),   
+            'images' => json_encode(rand(1, 3)),
+            'published' => fake()->boolean(),
             'price' => rand(20, 30) * 100,
             'description' =>fake()->text,
             'size' => rand(20, 40),

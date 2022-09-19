@@ -51,17 +51,6 @@ class OrderController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Order  $order
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Order $order)
-    {
-
-    }
-
-    /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -78,17 +67,6 @@ class OrderController extends Controller
         return $order;
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Order  $order
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Order $order)
-    {
-        //
-    }
-
     private function validateRequest($request)
     {       
         return $request->validate([
@@ -98,6 +76,7 @@ class OrderController extends Controller
             'payment_method' => 'required|string',
             'delivery_time' => 'required',
             'cart' => 'required|json',
+            'comment' => 'nullable|string',
             'status' => '',
             'paid' => ''
         ]);
