@@ -10,72 +10,53 @@ use Illuminate\Support\Str;
 
 class ImageController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
-        $image = $request->main_image;
-        $path = Storage::disk('public')->put('images/products/' . Str::slug($request->name), new File($image), 'public');
+        $this->validateRequest($request);
 
-        return asset('storage/' . $path);
+        $mainImgPath = '';
+        if ($request->main_image) {
+            $mainImgPath = Storage::disk('public')->put('images/products/', new File($request->main_image), 'public');
+            $mainImgPath = asset('storage/' . $mainImgPath);
+        }
+
+        $imgPaths = [];
+        if ($request->images) {            
+            foreach ($request->images as $key => $img) {
+                $imgPath = Storage::disk('public')->put('images/products/', new File($img), 'public');
+                $imgPaths[$key] = asset('storage/' . $imgPath);
+            }
+        }
+
+        return ['main_image' => $mainImgPath, 'images' => $imgPaths];  
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Image  $image
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Image $image)
+    public function destroy(Image $image, Request $request)
     {
-        //
+        if ($request->images) {
+            $res = '';
+            foreach ($request->images as $key => $img) {
+                $arr = explode('/', $img);
+                $imgName = $arr[count($arr) - 1];
+                $path = public_path("/storage/images/products/$imgName");
+                
+                if (file_exists($path)) {
+                    unlink($path);
+                    $res = $request->images;
+                } else {
+                    $res = "File $imgName does not exists.";
+                }
+            }
+            return $res;
+        }
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Image  $image
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Image $image)
+    private function validateRequest($request)
     {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Image  $image
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Image $image)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Image  $image
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Image $image)
-    {
-        //
+        return $request->validate([
+            'main_image' => "mimes:jpg,jpeg,png,csv,txt,xlx,xls,pdf|max:2048",
+            "images"    => "array|size:3",
+            'images.*' => 'mimes:jpg,jpeg,png,csv,txt,xlx,xls,pdf|max:2048',
+        ]);
     }
 }

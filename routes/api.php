@@ -26,11 +26,12 @@ Route::get('/products/{search}', [ProductsController::class, 'search']);
 
 Route::prefix('admin')->group(function () {
     Route::get('products', [AdminProductsController::class, 'index']);
-    Route::post('products', [AdminProductsController::class, 'store']);
+    Route::post('products', [AdminProductsController::class, 'store']);    
     Route::put('products/{product}', [AdminProductsController::class, 'update']);
+    Route::delete('products/{product}', [AdminProductsController::class, 'destroy']);
 
     Route::post('/image/add', [ImageController::class, 'store']);
-    Route::post('/image/delete', [ImageController::class, 'delete']);
+    Route::post('/image/delete', [ImageController::class, 'destroy']);
 });
 
 Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
