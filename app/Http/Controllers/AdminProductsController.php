@@ -11,6 +11,11 @@ class AdminProductsController extends Controller
         return Product::orderBy('created_at', 'DESC')->get(['name', 'main_image', 'published', 'price', 'size', 'id']);
     }
 
+    public function show(Product $product) 
+    {
+        return $product;
+    }
+
     public function store(Request $request)
     {
         $this->validateRequest($request);

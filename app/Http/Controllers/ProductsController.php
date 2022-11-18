@@ -9,7 +9,7 @@ class ProductsController extends Controller
 {
     public function index()
     {
-        return Product::where('published', '1')->orderBy('created_at', 'DESC')->get();
+        return Product::select('id', 'name', 'main_image', 'price')->where('published', '1')->orderBy('created_at', 'DESC')->get();
     }
 
     public function search($search) {
