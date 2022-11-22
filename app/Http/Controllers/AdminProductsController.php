@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Product;
+use Illuminate\Support\Str;
+
 class AdminProductsController extends Controller
 {
     public function index()
     {
-        return Product::orderBy('created_at', 'DESC')->get(['name', 'main_image', 'published', 'price', 'size', 'id']);
+        return Product::with('attributes')->orderBy('created_at', 'DESC')->get();
     }
 
     public function show(Product $product) 
@@ -18,15 +20,16 @@ class AdminProductsController extends Controller
 
     public function store(Request $request)
     {
+        return 'q';
         $this->validateRequest($request);
         $res = Product::create(
             [
                 'main_image' => $request->main_image,
-                'images' => $request->images,
                 'name' => $request->name,
-                'price' => $request->price,
-                'size' => $request->size,
+                'slug' => Str::slug($request->name),
+                'title' => $request->title,
                 'description' => $request->description,
+                'composition' => $request->composition,
                 'published' => $request->published
             ]
         );
@@ -39,15 +42,15 @@ class AdminProductsController extends Controller
         Product::where('id', $product->id)->update(
             [ 
                 'main_image' => $request->main_image,
-                'images' => $request->images,
                 'name' => $request->name,
-                'price' => $request->price,
-                'size' => $request->size,
+                'title' => $request->title,
                 'description' => $request->description,
+                'composition' => $request->description,
                 'published' => $request->published
             ]
         );
-        $res = Product::select('id', 'main_image', 'name', 'price', 'published', 'size')->where('id', $product->id)->first();
+        // $res = Product::select('id', 'main_image', 'name', 'price', 'published', 'size')->where('id', $product->id)->first();
+        $res = Product::select('id', 'main_image', 'name', 'published')->where('id', $product->id)->first();
         return $res;
     }
 
@@ -61,10 +64,12 @@ class AdminProductsController extends Controller
         return $request->validate([
             'main_image' => 'required|string',
             'name' => 'required|string',
-            "images"    => "required|json",
-            'price' => 'required|integer',
-            'size' => 'required|integer',
+            // "images"    => "required|json",
+            // 'price' => 'required|integer',
+            // 'size' => 'required|integer',
+            'title' => 'nullable|string',
             'description' => 'nullable|string',
+            'composition' => 'nullable|string',
             'published' => 'required',
         ]);
     }

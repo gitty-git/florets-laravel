@@ -4,15 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Http\Traits\UsesUuid;
 
-class Product extends Model
+class Attribute extends Model
 {
     use HasFactory;
+    // use UsesUuid;
 
     protected $guarded = [];
-
-    public function attributes()
+    public function product()
     {
-        return $this->hasMany(Attribute::class);
+        return $this->belongsTo(Product::class);
     }
 }

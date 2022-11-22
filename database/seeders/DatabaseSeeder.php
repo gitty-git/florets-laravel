@@ -17,22 +17,16 @@ class DatabaseSeeder extends Seeder
         // \App\Models\User::factory(10)->create();
 
         \App\Models\User::create([
-            'name' => 'Test User',
-            'email' => 'e@mail.com',
+            'name' => 'Nikita',
+            'email' => 'nikita@mail.com',
+            'role' => 'admin',
             'password' => password_hash('12341234', PASSWORD_BCRYPT)
         ]);
 
-        \App\Models\User::create([
-            'name' => 'Test User 2',
-            'email' => 'name@mail.com',
-            'password' => password_hash('12341234', PASSWORD_BCRYPT),
-            'role' => 'admin',
-        ]);
-
-        \App\Models\Product::factory(8)->create();
-        \App\Models\Order::factory(60)->create();
+        \App\Models\Product::factory(4)->create();
+        // \App\Models\Order::factory(60)->create();
         \App\Models\OpeningHours::create([
-            'opens_at' => '09:00:00',
+            'opens_at' => '08:00:00',
             'closes_at' => '23:59:59'
         ]);
     }

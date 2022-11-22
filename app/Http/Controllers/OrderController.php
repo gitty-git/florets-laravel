@@ -32,7 +32,6 @@ class OrderController extends Controller
      */
     public function store(Request $request)
     {
-        // return $request->delivery_time;
         $validated = $this->validateRequest($request);
 
         $createdOrder = Order::create($validated);

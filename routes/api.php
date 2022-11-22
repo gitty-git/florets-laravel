@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\AdminProductsController;
+use App\Http\Controllers\AttributesController;
 use App\Http\Controllers\CurrentDateController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\OpeningHoursController;
@@ -20,6 +21,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // Route::resource('product', ProductController::class);
 Route::get('products', [ProductsController::class, 'index']);
 Route::get('/products/{search}', [ProductsController::class, 'search']);
+Route::get('/attributes/{slug}', [AttributesController::class, 'show']);
 
 Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
     Route::prefix('admin')->group(function () {
@@ -28,6 +30,10 @@ Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
         Route::post('products', [AdminProductsController::class, 'store']);
         Route::put('products/{product}', [AdminProductsController::class, 'update']);
         Route::delete('products/{product}', [AdminProductsController::class, 'destroy']);
+
+        Route::post('attributes', [AttributesController::class, 'store']);        
+        Route::put('attributes/{attribute}', [AttributesController::class, 'update']);
+        Route::delete('attributes/{attribute}', [AttributesController::class, 'destroy']);
 
         Route::post('/image/add', [ImageController::class, 'store']);
         Route::post('/image/delete', [ImageController::class, 'destroy']);
