@@ -8,9 +8,9 @@ use Illuminate\Support\Str;
 
 class AttributesController extends Controller
 {
-    public function show($slug)
+    public function show($id)
     {
-        return Attribute::where('slug', $slug)->firstOrFail();
+        return Attribute::where('id', $id)->with('product:name,id,slug')->first();
     }
 
     public function store(Request $request)
@@ -37,7 +37,7 @@ class AttributesController extends Controller
             ]
         );
 
-        $res = Attribute::select('id', 'size', 'product_id')->where('id', $attribute->id)->first();
+        $res = Attribute::where('id', $attribute->id)->first();
         return $res;
     }
 

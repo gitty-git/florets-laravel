@@ -10,7 +10,9 @@ class ProductsController extends Controller
     public function index()
     {
         // return Product::all();
-        return Product::where('published', '1')->select('id', 'slug', 'name', 'main_image', 'title')->with('attributes')->orderBy('created_at', 'DESC')->get();
+        return Product::with('attributes:slug,product_id,id')->where('published', '1')
+        ->select('id', 'slug', 'name', 'main_image', 'title')
+        ->orderBy('created_at', 'ASC')->get();
     }
 
     public function search($search) {

@@ -55,7 +55,7 @@ class ImageController extends Controller
     {
         return $request->validate([
             'main_image' => "mimes:jpg,jpeg,png,csv,txt,xlx,xls,pdf|max:2048",
-            "images"    => "array|size:3",
+            "images"    => "array",
             'images.*' => 'mimes:jpg,jpeg,png,csv,txt,xlx,xls,pdf|max:2048',
         ]);
     }

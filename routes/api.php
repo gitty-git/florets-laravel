@@ -21,7 +21,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // Route::resource('product', ProductController::class);
 Route::get('products', [ProductsController::class, 'index']);
 Route::get('/products/{search}', [ProductsController::class, 'search']);
-Route::get('/attributes/{slug}', [AttributesController::class, 'show']);
+Route::get('/attributes/{id}', [AttributesController::class, 'show']);
 
 Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
     Route::prefix('admin')->group(function () {

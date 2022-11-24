@@ -20,7 +20,6 @@ class AdminProductsController extends Controller
 
     public function store(Request $request)
     {
-        return 'q';
         $this->validateRequest($request);
         $res = Product::create(
             [
@@ -42,6 +41,7 @@ class AdminProductsController extends Controller
         Product::where('id', $product->id)->update(
             [ 
                 'main_image' => $request->main_image,
+                'slug' => Str::slug($request->name),
                 'name' => $request->name,
                 'title' => $request->title,
                 'description' => $request->description,
@@ -50,7 +50,7 @@ class AdminProductsController extends Controller
             ]
         );
         // $res = Product::select('id', 'main_image', 'name', 'price', 'published', 'size')->where('id', $product->id)->first();
-        $res = Product::select('id', 'main_image', 'name', 'published')->where('id', $product->id)->first();
+        $res = Product::select('id', 'main_image', 'name', 'published')->with('attributes')->where('id', $product->id)->first();
         return $res;
     }
 
@@ -64,9 +64,6 @@ class AdminProductsController extends Controller
         return $request->validate([
             'main_image' => 'required|string',
             'name' => 'required|string',
-            // "images"    => "required|json",
-            // 'price' => 'required|integer',
-            // 'size' => 'required|integer',
             'title' => 'nullable|string',
             'description' => 'nullable|string',
             'composition' => 'nullable|string',
