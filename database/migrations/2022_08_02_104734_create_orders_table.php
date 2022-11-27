@@ -14,17 +14,24 @@ return new class extends Migration
     public function up()
     {
         Schema::create('orders', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->string('id')->primary();            
+            $table->boolean('viewed')->default(false);
             $table->timestamps();
             $table->enum('status', ['created', 'processed', 'sent', 'received', 'canceled'])->default('created');
-            $table->boolean('paid')->default(0);
+            $table->boolean('paid')->default(0);            
             $table->string('name');
             $table->string('comment')->nullable();
             $table->string('delivery_time');
             $table->string('phone');
             $table->string('address');
             $table->json('cart');
-            $table->enum('payment_method', ['card', 'cash']);
+            $table->enum('payment_method', ['card', 'cash', 'online']);
+            $table->enum('way_to_receive', ['me', 'another', 'self_delivery'])->default('me');
+            $table->string('receiver_name')->nullable();
+            $table->string('receiver_phone')->nullable();
+            $table->string('apt')->nullable();
+            $table->string('paymentId')->nullable();
+            $table->integer('amount')->nullable();
         });
     }
 

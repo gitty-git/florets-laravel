@@ -20,11 +20,11 @@ class DatabaseSeeder extends Seeder
             'name' => 'Nikita',
             'email' => 'nikita@mail.com',
             'role' => 'admin',
-            'password' => password_hash('12341234', PASSWORD_BCRYPT)
+            'password' => password_hash('jdUJDu63Y', PASSWORD_BCRYPT)
         ]);
 
-        \App\Models\Product::factory(4)->create();
-        // \App\Models\Order::factory(60)->create();
+        // \App\Models\Product::factory(4)->create();
+        // \App\Models\Order::factory(20)->create();
         \App\Models\OpeningHours::create([
             'opens_at' => '08:00:00',
             'closes_at' => '23:59:59'

@@ -7,6 +7,7 @@ use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\AdminProductsController;
 use App\Http\Controllers\AttributesController;
 use App\Http\Controllers\CurrentDateController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\OpeningHoursController;
 
@@ -22,6 +23,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::get('products', [ProductsController::class, 'index']);
 Route::get('/products/{search}', [ProductsController::class, 'search']);
 Route::get('/attributes/{id}', [AttributesController::class, 'show']);
+Route::post('paym_tinkoff', [PaymentController::class, 'handle']);
+Route::get('order/{id}', [OrderController::class, 'show']);
 
 Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
     Route::prefix('admin')->group(function () {
@@ -45,7 +48,6 @@ Route::get('opening-hours', [OpeningHoursController::class, 'index']);
 Route::get('get-date', [CurrentDateController::class, 'index']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
-    Route::get('orders/{option}', [OrderController::class, 'index']);
-    Route::get('order/{id}', [OrderController::class, 'show']);
+    Route::get('orders/{option}', [OrderController::class, 'index']);    
     Route::put('orders/{order}', [OrderController::class, 'update']);
 });
