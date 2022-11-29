@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
-use App\Models\Attribute;
+use App\Models\Size;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -27,42 +27,41 @@ class OrderController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $this->validateRequest($request, true);
-        $createdOrder = Order::create($validated);
-        $cart = json_decode($createdOrder->cart);
+        $cart = json_decode($request->cart);
 
         $items = [];
-        $deliveryDiscount = 0;
 
-        if ($createdOrder->way_to_receive === 'self_delivery') {
+        if ($request->delivery_method === 'self_delivery') {
             $this->deliveryDiscount = 0.1;
         }
 
         $amount = 0;
         foreach ($cart as $key => $val) {            
-            $res = Attribute::where('id', $val->id)->with('product')->firstOrFail();
-            $amount += $this->countDisc($res->price * $val->amount);
+            $res = Size::where('id', $val->id)->with('product')->firstOrFail();
+            $amount += $this->countDisc($res->price * $val->quantity);
             if ($res->id === $val->id) {
                 $items[$key] = [
                     'Name' => $res->product->name . ' - ' . strtoupper($res->size),
-                    'Quantity' => $val->amount,
-                    'Amount' => $this->countDisc($res->price * $val->amount * 100),
+                    'Quantity' => $val->quantity,
+                    'Amount' => $this->countDisc($res->price * $val->quantity * 100),
                     'Price' => $this->countDisc($res->price * 100),
                     'Tax' => 'none'
                 ];
             }
         }
 
+        $validated = $this->validateRequest($request, true);        
+        $createdOrder = Order::create($validated);
+
         // все ли размеры продуктов существуют?
-        $equal = count($cart) + 1 === count($items);
-        if (!$equal) return ['status' => 404, 'Some products not found'];        
+        $equal = count($cart) === count($items);
+        if (!$equal) return ['status' => 404, 'Some products not found'];
 
         if ($request->payment_method === 'online') {           
             $data = [
                 'TerminalKey' => env('TINKOFF_TERMINAL'),
                 'Amount' => $amount * 100,
                 'OrderId' => $createdOrder->id,
-                'NotificationURL' => env('NOTIFICATION_URL'),
                 'SuccessURL' => env('SUCCESS_URL') . "/$createdOrder->id/paid",
                 'FailURL' => env('FAIL_URL'),
                 
@@ -79,8 +78,7 @@ class OrderController extends Controller
 
             $url = env('TINKOFF_URL') . '/Init';
             $response = Http::withOptions(['verify' => false])->post($url, $data);
-            // return $response;
-            Order::where('id', $createdOrder->id)->update(['PaymentId' => $response['PaymentId'], 'amount' => $amount * 100]);
+            Order::where('id', $createdOrder->id)->update(['PaymentId' => $response['PaymentId']]);
             
             return $response;
         }
@@ -90,7 +88,7 @@ class OrderController extends Controller
 
     public function show(Order $order, $id)
     {
-        return $order = Order::where('id', $id)->firstOrFail()->makeHidden(['paymentId']);
+        $order = Order::where('id', $id)->firstOrFail();
 
         $arr = [
             'Amount' => $order->amount,
@@ -106,27 +104,43 @@ class OrderController extends Controller
             $str .= $val;
         }
 
-        $str = '1664975277721DEMO' . 'jv7qy20l6etupd08';
-        
-        $token = hash("sha256", $str);
+        if ($order->paymentId) {
+            $str = env('TINKOFF_PASSWORD') . $order->paymentId . env('TINKOFF_TERMINAL');
 
-        $data = [
-            "TerminalKey" => env('TINKOFF_TERMINAL'),
-            "OrderId" => $order->id,
-            "Token" => $token,
-        ];
+            $token = hash("sha256", $str);
 
-        $url = env('TINKOFF_URL') . '/CheckOrder';
+            $data = [
+                "TerminalKey" => env('TINKOFF_TERMINAL'),
+                "PaymentId" => $order->paymentId,
+                "Token" => $token,
+            ];
 
-        $response = Http::withOptions(['verify' => false])->post($url, $data);
-        return $response;
+            $url = env('TINKOFF_URL') . '/GetState';
+
+            $response = Http::withOptions(['verify' => false])->post($url, $data);
+
+            if ($response && $response['Success'] === true) {
+                $order->amount = $response['Amount'] / 100;
+                $order->online_payment_status = 'CONFIRMED';
+            }
+            else $order->online_payment_status = 'BANK_RESPONSE_ERR';
+
+            $order->makeHidden(['paymentId']);
+            
+            return $order;
+        }
+        $order->online_payment_status = 'NO_PAYMENT';
+        return $order;
+
     }
 
-    public function update(Request $request, Order $order)
+    public function update(Request $request, $id)
     {
-        $validated = $this->validateRequest($request, false);
+        $request->online_payment_status = '';
+        $request->amount = '';
+        $validated = $this->validateRequest($request, false);    
 
-        $order = Order::where('id', $order->id)
+        $order = Order::where('id', $id)
                 ->update($validated);
         return $order;
     }
@@ -147,9 +161,9 @@ class OrderController extends Controller
             "comment" => "nullable|string",
             "status" => "nullable|string",
             "paid" => "nullable",
-            "way_to_receive" => "$isRequired|string",
-            "receiver_name" => "required_if:way_to_receive,another",
-            "receiver_phone" => "required_if:way_to_receive,another"
+            "delivery_method" => "$isRequired|string",
+            "receiver_name" => "required_if:delivery_method,another",
+            "receiver_phone" => "required_if:delivery_method,another"
         ]);
     }
 }

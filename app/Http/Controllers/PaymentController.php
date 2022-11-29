@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
-    public function handle(Request $request)
+    public function cancel(Request $request)
     {        
         if ($request->Success === true) {
             Order::where('id', $request->paymentId)->update(['paid' => 1]);

@@ -11,8 +11,8 @@ class Product extends Model
 
     protected $guarded = [];
 
-    public function attributes()
+    public function sizes()
     {
-        return $this->hasMany(Attribute::class);
+        return $this->hasMany(Size::class);
     }
 }

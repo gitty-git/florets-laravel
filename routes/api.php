@@ -5,11 +5,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\AdminProductsController;
-use App\Http\Controllers\AttributesController;
 use App\Http\Controllers\CurrentDateController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\OpeningHoursController;
+use App\Http\Controllers\SizesController;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();    
@@ -22,8 +22,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // Route::resource('product', ProductController::class);
 Route::get('products', [ProductsController::class, 'index']);
 Route::get('/products/{search}', [ProductsController::class, 'search']);
-Route::get('/attributes/{id}', [AttributesController::class, 'show']);
-Route::post('paym_tinkoff', [PaymentController::class, 'handle']);
+Route::get('/sizes/{id}', [SizesController::class, 'show']);
+Route::post('cancel_payment/{orderId}', [PaymentController::class, 'cancel']);
 Route::get('order/{id}', [OrderController::class, 'show']);
 
 Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
@@ -34,9 +34,9 @@ Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
         Route::put('products/{product}', [AdminProductsController::class, 'update']);
         Route::delete('products/{product}', [AdminProductsController::class, 'destroy']);
 
-        Route::post('attributes', [AttributesController::class, 'store']);        
-        Route::put('attributes/{attribute}', [AttributesController::class, 'update']);
-        Route::delete('attributes/{attribute}', [AttributesController::class, 'destroy']);
+        Route::post('sizes', [SizesControllertesController::class, 'store']);        
+        Route::put('sizes/{size}', [SizesController::class, 'update']);
+        Route::delete('sizes/{size}', [SizesController::class, 'destroy']);
 
         Route::post('/image/add', [ImageController::class, 'store']);
         Route::post('/image/delete', [ImageController::class, 'destroy']);

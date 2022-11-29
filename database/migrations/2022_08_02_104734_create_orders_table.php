@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('address');
             $table->json('cart');
             $table->enum('payment_method', ['card', 'cash', 'online']);
-            $table->enum('way_to_receive', ['me', 'another', 'self_delivery'])->default('me');
+            $table->enum('delivery_method', ['me', 'another', 'self_delivery'])->default('me');
             $table->string('receiver_name')->nullable();
             $table->string('receiver_phone')->nullable();
             $table->string('apt')->nullable();

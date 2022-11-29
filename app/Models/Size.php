@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Http\Traits\UsesUuid;
 
-class Attribute extends Model
+class Size extends Model
 {
     use HasFactory;
     // use UsesUuid;
