@@ -3,16 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\Attribute;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
 
 class OrderController extends Controller
 {
+    private $deliveryDiscount = 0;
+
+    private function countDisc($num)
+    {
+        return $num - $num * $this->deliveryDiscount;
+    }
 
     public function index($option)
     {
-        // return $option;
         if ($option === 'all') {
              return Order::orderBy('created_at', 'DESC')->paginate(10);
         }
@@ -25,41 +31,55 @@ class OrderController extends Controller
         $createdOrder = Order::create($validated);
         $cart = json_decode($createdOrder->cart);
 
-        $amount = 0;
-        for ($i = 0; $i < count($cart); $i++) {
-            $amount += $cart[$i]->amount * $cart[$i]->price;
-        }
+        $items = [];
+        $deliveryDiscount = 0;
 
         if ($createdOrder->way_to_receive === 'self_delivery') {
-            $amount = $amount - $amount * 0.1;
+            $this->deliveryDiscount = 0.1;
         }
+
+        $amount = 0;
+        foreach ($cart as $key => $val) {            
+            $res = Attribute::where('id', $val->id)->with('product')->firstOrFail();
+            $amount += $this->countDisc($res->price * $val->amount);
+            if ($res->id === $val->id) {
+                $items[$key] = [
+                    'Name' => $res->product->name . ' - ' . strtoupper($res->size),
+                    'Quantity' => $val->amount,
+                    'Amount' => $this->countDisc($res->price * $val->amount * 100),
+                    'Price' => $this->countDisc($res->price * 100),
+                    'Tax' => 'none'
+                ];
+            }
+        }
+
+        // все ли размеры продуктов существуют?
+        $equal = count($cart) + 1 === count($items);
+        if (!$equal) return ['status' => 404, 'Some products not found'];        
 
         if ($request->payment_method === 'online') {           
             $data = [
                 'TerminalKey' => env('TINKOFF_TERMINAL'),
                 'Amount' => $amount * 100,
                 'OrderId' => $createdOrder->id,
-                'Description' => 'tinkoffpay',
                 'NotificationURL' => env('NOTIFICATION_URL'),
                 'SuccessURL' => env('SUCCESS_URL') . "/$createdOrder->id/paid",
                 'FailURL' => env('FAIL_URL'),
+                
                 'DATA' => [
-                    'Phone' => $request->phone,
-                    'Name' => $request->name,
+                    'Phone' => $createdOrder->phone,
+                    'Name' => $createdOrder->name,
                 ],
-                // 'Receipt' => [
-                //     'Phone' => $phone,
-                //     'Items' => [
-                //         'Name' => 'Bouq',
-                //         'Price' => 10000,
-                //         'Quantity' => 1.00,
-                //         'Amount' => 10000,
-                //     ]
-                // ]
+                'Receipt' => [
+                    'Phone' => $createdOrder->phone,
+                    'Taxation' => 'usn_income',
+                    'Items' => $items,
+                ]
             ];
 
             $url = env('TINKOFF_URL') . '/Init';
-            $response = Http::withOptions(['verify' => false])->post($url, $data);            
+            $response = Http::withOptions(['verify' => false])->post($url, $data);
+            // return $response;
             Order::where('id', $createdOrder->id)->update(['PaymentId' => $response['PaymentId'], 'amount' => $amount * 100]);
             
             return $response;
