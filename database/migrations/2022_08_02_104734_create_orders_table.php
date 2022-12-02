@@ -24,14 +24,15 @@ return new class extends Migration
             $table->string('delivery_time');
             $table->string('phone');
             $table->string('address');
+            $table->string('email');
             $table->json('cart');
+            $table->json('items')->nullable();
             $table->enum('payment_method', ['card', 'cash', 'online']);
             $table->enum('delivery_method', ['me', 'another', 'self_delivery'])->default('me');
             $table->string('receiver_name')->nullable();
             $table->string('receiver_phone')->nullable();
             $table->string('apt')->nullable();
             $table->string('paymentId')->nullable();
-            $table->integer('amount')->nullable();
         });
     }
 

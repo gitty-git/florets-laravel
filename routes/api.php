@@ -23,18 +23,20 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::get('products', [ProductsController::class, 'index']);
 Route::get('/products/{search}', [ProductsController::class, 'search']);
 Route::get('/sizes/{id}', [SizesController::class, 'show']);
-Route::post('cancel_payment/{orderId}', [PaymentController::class, 'cancel']);
 Route::get('order/{id}', [OrderController::class, 'show']);
+Route::get('order_get_status/{id}', [OrderController::class, 'getStatus']);
+Route::get('get_payment_status/{orderId}', [PaymentController::class, 'getStatus']);
 
 Route::middleware(['auth:sanctum', 'isAdmin'])->group(function () {
     Route::prefix('admin')->group(function () {
+        Route::post('cancel_payment/{orderId}', [PaymentController::class, 'cancel']);
         Route::get('products', [AdminProductsController::class, 'index']);
         Route::get('products/{product}', [AdminProductsController::class, 'show']);
         Route::post('products', [AdminProductsController::class, 'store']);
         Route::put('products/{product}', [AdminProductsController::class, 'update']);
         Route::delete('products/{product}', [AdminProductsController::class, 'destroy']);
 
-        Route::post('sizes', [SizesControllertesController::class, 'store']);        
+        Route::post('sizes', [SizesController::class, 'store']);        
         Route::put('sizes/{size}', [SizesController::class, 'update']);
         Route::delete('sizes/{size}', [SizesController::class, 'destroy']);
 

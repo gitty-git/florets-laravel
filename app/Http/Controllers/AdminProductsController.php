@@ -10,7 +10,7 @@ class AdminProductsController extends Controller
 {
     public function index()
     {
-        return Product::with('attributes')->orderBy('created_at', 'DESC')->get();
+        return Product::with('sizes')->orderBy('created_at', 'DESC')->get();
     }
 
     public function show(Product $product) 
@@ -50,7 +50,7 @@ class AdminProductsController extends Controller
             ]
         );
         // $res = Product::select('id', 'main_image', 'name', 'price', 'published', 'size')->where('id', $product->id)->first();
-        $res = Product::select('id', 'main_image', 'name', 'published')->with('attributes')->where('id', $product->id)->first();
+        $res = Product::select('id', 'main_image', 'name', 'published')->with('sizes')->where('id', $product->id)->first();
         return $res;
     }
 

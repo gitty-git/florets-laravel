@@ -10,11 +10,11 @@ use Illuminate\Support\Facades\Http;
 
 class OrderController extends Controller
 {
-    private $deliveryDiscount = 0;
+    private $discount = 0;
 
     private function countDisc($num)
     {
-        return $num - $num * $this->deliveryDiscount;
+        return $num - $num * $this->discount;
     }
 
     public function index($option)
@@ -25,23 +25,29 @@ class OrderController extends Controller
         else return Order::where('status', '=', $option)->orderBy('created_at', 'DESC')->paginate(10);          
     }
 
+    public function getStatus($id)
+    {
+        return Order::where('id', $id)->select(['status', 'id'])->firstOrFail();
+    }
+
     public function store(Request $request)
     {
-        $cart = json_decode($request->cart);
+        $cart = json_decode($request->cart);        
 
-        $items = [];
-
+        // discount
         if ($request->delivery_method === 'self_delivery') {
-            $this->deliveryDiscount = 0.1;
+            $this->discount = 0.1;
         }
 
         $amount = 0;
+        // get items
+        $items = [];
         foreach ($cart as $key => $val) {            
             $res = Size::where('id', $val->id)->with('product')->firstOrFail();
             $amount += $this->countDisc($res->price * $val->quantity);
             if ($res->id === $val->id) {
                 $items[$key] = [
-                    'Name' => $res->product->name . ' - ' . strtoupper($res->size),
+                    'Name' => $res->product->name . ' - ' . strtoupper($res->name),
                     'Quantity' => $val->quantity,
                     'Amount' => $this->countDisc($res->price * $val->quantity * 100),
                     'Price' => $this->countDisc($res->price * 100),
@@ -57,12 +63,14 @@ class OrderController extends Controller
         $equal = count($cart) === count($items);
         if (!$equal) return ['status' => 404, 'Some products not found'];
 
-        if ($request->payment_method === 'online') {           
+        // set data
+        if ($request->payment_method === 'online') {      
+
             $data = [
                 'TerminalKey' => env('TINKOFF_TERMINAL'),
                 'Amount' => $amount * 100,
                 'OrderId' => $createdOrder->id,
-                'SuccessURL' => env('SUCCESS_URL') . "/$createdOrder->id/paid",
+                'SuccessURL' => env('SUCCESS_URL') . "/$createdOrder->id",
                 'FailURL' => env('FAIL_URL'),
                 
                 'DATA' => [
@@ -71,16 +79,31 @@ class OrderController extends Controller
                 ],
                 'Receipt' => [
                     'Phone' => $createdOrder->phone,
+                    'Email' => $createdOrder->email,
                     'Taxation' => 'usn_income',
                     'Items' => $items,
                 ]
-            ];
+            ];            
 
             $url = env('TINKOFF_URL') . '/Init';
             $response = Http::withOptions(['verify' => false])->post($url, $data);
-            Order::where('id', $createdOrder->id)->update(['PaymentId' => $response['PaymentId']]);
-            
-            return $response;
+
+            if ($response->successful() && $response['Success'] === true) {
+                Order::where('id', $createdOrder->id)->update([
+                    'PaymentId' => $response['PaymentId'],
+                    'items' => json_encode($items)
+                ]);
+
+                return $response;
+            }
+            else {
+                Order::where('id', $createdOrder->id)->delete();
+                $returnData = [
+                    'status' => 'Error',
+                    'message' => 'Не удалось создать заказ'
+                ];
+                return response()->json($returnData, 500);
+            }
         }
         
         return $createdOrder;
@@ -90,48 +113,19 @@ class OrderController extends Controller
     {
         $order = Order::where('id', $id)->firstOrFail();
 
-        $arr = [
-            'Amount' => $order->amount,
-            'TerminalKey' => env('TINKOFF_TERMINAL'),
-            'Password' => env('TINKOFF_PASSWORD'),
-        ];
-
-        ksort($arr);
-
-        $str = '';
-
-        foreach ($arr as $key => $val) {
-            $str .= $val;
+        $amount = 0;
+        foreach (json_decode($order->cart) as $key => $val) {
+            $res = Size::where('id', $val->id)->with('product')->firstOrFail();
+            $amount += $this->countDisc($res->price * $val->quantity);
         }
 
-        if ($order->paymentId) {
-            $str = env('TINKOFF_PASSWORD') . $order->paymentId . env('TINKOFF_TERMINAL');
-
-            $token = hash("sha256", $str);
-
-            $data = [
-                "TerminalKey" => env('TINKOFF_TERMINAL'),
-                "PaymentId" => $order->paymentId,
-                "Token" => $token,
-            ];
-
-            $url = env('TINKOFF_URL') . '/GetState';
-
-            $response = Http::withOptions(['verify' => false])->post($url, $data);
-
-            if ($response && $response['Success'] === true) {
-                $order->amount = $response['Amount'] / 100;
-                $order->online_payment_status = 'CONFIRMED';
-            }
-            else $order->online_payment_status = 'BANK_RESPONSE_ERR';
-
-            $order->makeHidden(['paymentId']);
-            
-            return $order;
+        if ($order->delivery_method === 'self_delivery') {
+            $this->discount = 0.1;
         }
-        $order->online_payment_status = 'NO_PAYMENT';
+
+        $order->amount = $this->countDisc($amount);
+        $order->makeHidden(['paymentId']);            
         return $order;
-
     }
 
     public function update(Request $request, $id)
@@ -154,11 +148,13 @@ class OrderController extends Controller
             'viewed' => "nullable",
             'name' => "$isRequired|string",
             "phone" => "$isRequired|string",
+            "email" => "$isRequired|string",
             "address" => "$isRequired|string",
             "payment_method" => "$isRequired|string",
             "delivery_time" => "$isRequired",
             "cart" => "$isRequired|json",
             "comment" => "nullable|string",
+            "apt" => "nullable|string",
             "status" => "nullable|string",
             "paid" => "nullable",
             "delivery_method" => "$isRequired|string",

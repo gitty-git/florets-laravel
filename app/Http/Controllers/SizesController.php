@@ -16,17 +16,17 @@ class SizesController extends Controller
     public function store(Request $request)
     {
         $slug = Str::slug($request->size);
-        $attribute = Size::query()
+        $size = Size::query()
             ->create(array_merge($this->validateRequest($request), ['slug' => $slug]))->fresh();       
 
         return Size::query()
-            ->find($attribute->id);
+            ->find($size->id);
     }
 
-    public function update(Request $request, Size $attribute)
+    public function update(Request $request, Size $size)
     {
         $this->validateRequest($request);
-        Size::where('id', $attribute->id)->update(
+        Size::where('id', $size->id)->update(
             [
                 'images' => $request->images,
                 'price' => $request->price,
@@ -37,7 +37,7 @@ class SizesController extends Controller
             ]
         );
 
-        $res = Size::where('id', $attribute->id)->first();
+        $res = Size::where('id', $size->id)->first();
         return $res;
     }
 
