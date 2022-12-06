@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Size;
+use App\Models\User;
+use App\Notifications\NewOrderNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-
+use Illuminate\Support\Facades\Notification;
 
 class OrderController extends Controller
 {
@@ -58,6 +60,8 @@ class OrderController extends Controller
 
         $validated = $this->validateRequest($request, true);        
         $createdOrder = Order::create($validated);
+        $admins = User::where('role', 'admin')->orWhere('role', 'employee')->get();
+        Notification::send($admins, new NewOrderNotification($createdOrder, $items));
 
         // все ли размеры продуктов существуют?
         $equal = count($cart) === count($items);
@@ -115,8 +119,10 @@ class OrderController extends Controller
 
         $amount = 0;
         foreach (json_decode($order->cart) as $key => $val) {
-            $res = Size::where('id', $val->id)->with('product')->firstOrFail();
-            $amount += $this->countDisc($res->price * $val->quantity);
+            $res = Size::where('id', $val->id)->with('product')->first();
+            if ($res) {
+                $amount += $this->countDisc($res->price * $val->quantity);
+            }            
         }
 
         if ($order->delivery_method === 'self_delivery') {
